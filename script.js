@@ -85,8 +85,8 @@ function renderCombatants(combatants) {
     combatantDiv.classList.add(combatant.type === 'player' ? 'player' : 'opponent');
     combatantDiv.id = combatant.id;
     combatantDiv.innerHTML = combatant.type === 'player' ? `
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <span><strong>Player: ${combatant.name}</span>
+      <div class="player-details">
+        <span><strong>Player: ${combatant.name}</strong></span>
         <input type="number" value="${combatant.speed}" onchange="updatePlayerSpeed('${combatant.id}', this.value)">
         <button class="remove-button" onclick="removePlayer('${combatant.id}')">Remove</button>
       </div>
