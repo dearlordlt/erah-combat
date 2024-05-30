@@ -16,11 +16,11 @@
             max-width: 800px;
             margin: auto;
         }
-        h1 {
+        h1, h2 {
             text-align: center;
             font-size: 24px;
         }
-        .opponent {
+        .combatant {
             border: 1px solid #ddd;
             padding: 5px;
             margin-bottom: 10px;
@@ -59,13 +59,34 @@
             display: inline-block;
             margin-right: 10px;
         }
+        .remove-button {
+            margin-left: 10px;
+        }
         @media (max-width: 600px) {
-            .opponent {
+            .combatant {
                 font-size: 12px;
             }
             input, select {
                 padding: 4px;
             }
+        }
+        .collapsible {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .collapsible.active, .collapsible:hover {
+            background-color: #ddd;
+        }
+        .content {
+            padding: 10px;
+            display: none;
+            overflow: hidden;
+            background-color: #f9f9f9;
         }
     </style>
     <script defer src="script.js"></script>
@@ -76,7 +97,12 @@
         <label for="opponentsCount">Number of Opponents:</label>
         <input type="number" id="opponentsCount" value="3">
         <button onclick="startCombat()">Start Combat</button>
-        <div id="opponentsList"></div>
+        <h2>Add Player</h2>
+        <input type="text" id="playerName" placeholder="Player Name">
+        <input type="number" id="playerSpeed" placeholder="Speed">
+        <button onclick="addPlayer()">Add Player</button>
+        <button onclick="sortCombatants()">Sort by Speed</button>
+        <div id="combatantsList"></div>
         <div class="save-load-container">
             <input type="text" id="saveName" placeholder="Save Name">
             <button onclick="saveState()">Save</button>

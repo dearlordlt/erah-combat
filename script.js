@@ -9,6 +9,9 @@ const lastNameEnds = ["e", "is", "t", "dis", "x", "or", "lo", "e", "ex", "yl", "
 
 const weapons = ["Pistol", "SMG", "Rifle"];
 
+let players = [];
+let opponents = [];
+
 function getRandomName(gender) {
   let firstNameStart, firstNameEnd;
   if (gender === "male") {
@@ -35,13 +38,9 @@ function getRandomStat(min, max, outliers = false) {
 
 function startCombat() {
   const opponentsCount = document.getElementById('opponentsCount').value;
-  const opponentsList = document.getElementById('opponentsList');
-  opponentsList.innerHTML = ''; // Clear previous opponents
+  opponents = [];
 
   for (let i = 0; i < opponentsCount; i++) {
-    const opponentDiv = document.createElement('div');
-    opponentDiv.classList.add('opponent');
-
     const gender = Math.random() < 0.5 ? 'male' : 'female';
     const name = getRandomName(gender);
     const attack = getRandomStat(3, 6, true);
@@ -64,77 +63,206 @@ function startCombat() {
     const armor = getRandomStat(1, 4);
     const headArmor = Math.random() < 0.2 ? armor + 1 : armor;
     const bodyArmor = Math.random() < 0.2 ? armor + 1 : armor;
+    const description = "";
 
-    opponentDiv.innerHTML = `
-            <h3>Opponent ${i + 1}</h3>
-            <div class="stats-grid">
-                <div>
-                    <label for="gender${i}">Gender:</label>
-                    <input type="text" id="gender${i}" value="${gender}" >
-                </div>
-                <div>
-                    <label for="name${i}">Name:</label>
-                    <input type="text" id="name${i}" value="${name}" >
-                </div>
-                <div>
-                    <label for="attack${i}">Attack:</label>
-                    <input type="number" id="attack${i}" value="${attack}" >
-                </div>
-                <div>
-                    <label for="defence${i}">Defence:</label>
-                    <input type="number" id="defence${i}" value="${defence}" >
-                </div>
-                <div>
-                    <label for="speed${i}">Speed:</label>
-                    <input type="number" id="speed${i}" value="${speed}" >
-                </div>
-                <div>
-                    <label for="hp${i}">HP:</label>
-                    <input type="number" id="hp${i}" value="${hp}" >
-                </div>
-                <div>
-                    <label for="weapon${i}">Weapon:</label>
-                    <input type="text" id="weapon${i}" value="${weapon}" >
-                </div>
-                <div>
-                    <label for="damage${i}">Damage:</label>
-                    <input type="number" id="damage${i}" value="${damage}" >
-                </div>
-            </div>
-            <h4>Damage Effects</h4>
-            ${generateLocationHTML('Head', headArmor, i)}
-            ${generateLocationHTML('Body', bodyArmor, i)}
-            ${generateLocationHTML('Left Hand', armor, i)}
-            ${generateLocationHTML('Right Hand', armor, i)}
-            ${generateLocationHTML('Left Leg', armor, i)}
-            ${generateLocationHTML('Right Leg', armor, i)}
-        `;
-
-    opponentsList.appendChild(opponentDiv);
+    opponents.push({ type: 'opponent', id: generateUniqueId(), gender, name, attack, defence, speed, hp, weapon, damage, headArmor, bodyArmor, armor, description });
   }
+
+  sortCombatants();
+  renderCombatants([...players, ...opponents]);
 }
 
-function generateLocationHTML(location, armor, index) {
-  return `
-        <label for="${location.toLowerCase().replace(' ', '')}${index}">${location}:</label>
-        <input type="number" id="${location.toLowerCase().replace(' ', '')}${index}" value="${armor}" >
-        <div class="damage-effects">
-            ${generateDamageEffectSelect(`${location.toLowerCase().replace(' ', '')}Effect1${index}`)}
-            ${generateDamageEffectSelect(`${location.toLowerCase().replace(' ', '')}Effect2${index}`)}
-            ${generateDamageEffectSelect(`${location.toLowerCase().replace(' ', '')}Effect3${index}`)}
+function generateUniqueId() {
+  return 'id-' + Math.random().toString(36).substr(2, 9);
+}
+
+function renderCombatants(combatants) {
+  const combatantsList = document.getElementById('combatantsList');
+  combatantsList.innerHTML = '';
+
+  combatants.forEach(combatant => {
+    const combatantDiv = document.createElement('div');
+    combatantDiv.classList.add(combatant.type === 'player' ? 'player' : 'opponent');
+    combatantDiv.id = combatant.id;
+    combatantDiv.innerHTML = combatant.type === 'player' ? `
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span><strong>Player: ${combatant.name}</span>
+        <input type="number" value="${combatant.speed}" onchange="updatePlayerSpeed('${combatant.id}', this.value)">
+        <button class="remove-button" onclick="removePlayer('${combatant.id}')">Remove</button>
+      </div>
+    ` : `
+      <button type="button" class="collapsible">Opponent: ${combatant.name} (Speed: ${combatant.speed})</button>
+      <div class="content">
+        <div class="stats-grid">
+          <div>
+            <label for="gender${combatant.id}">Gender:</label>
+            <input type="text" id="gender${combatant.id}" value="${combatant.gender}" readonly>
+          </div>
+          <div>
+            <label for="name${combatant.id}">Name:</label>
+            <input type="text" id="name${combatant.id}" value="${combatant.name}" readonly>
+          </div>
+          <div>
+            <label for="attack${combatant.id}">Attack:</label>
+            <input type="number" id="attack${combatant.id}" value="${combatant.attack}" readonly>
+          </div>
+          <div>
+            <label for="defence${combatant.id}">Defence:</label>
+            <input type="number" id="defence${combatant.id}" value="${combatant.defence}" readonly>
+          </div>
+          <div>
+            <label for="speed${combatant.id}">Speed:</label>
+            <input type="number" id="speed${combatant.id}" value="${combatant.speed}" readonly>
+          </div>
+          <div>
+            <label for="hp${combatant.id}">HP:</label>
+            <input type="number" id="hp${combatant.id}" value="${combatant.hp}" readonly>
+          </div>
+          <div>
+            <label for="weapon${combatant.id}">Weapon:</label>
+            <input type="text" id="weapon${combatant.id}" value="${combatant.weapon}" readonly>
+          </div>
+          <div>
+            <label for="damage${combatant.id}">Damage:</label>
+            <input type="number" id="damage${combatant.id}" value="${combatant.damage}" readonly>
+          </div>
         </div>
+        <h4>Damage Effects</h4>
+        ${generateLocationHTML('Head', combatant.headArmor, combatant.id)}
+        ${generateLocationHTML('Body', combatant.bodyArmor, combatant.id)}
+        ${generateLocationHTML('Left Hand', combatant.armor, combatant.id)}
+        ${generateLocationHTML('Right Hand', combatant.armor, combatant.id)}
+        ${generateLocationHTML('Left Leg', combatant.armor, combatant.id)}
+        ${generateLocationHTML('Right Leg', combatant.armor, combatant.id)}
+        <h4>Description</h4>
+        <textarea id="description${combatant.id}" rows="2">${combatant.description}</textarea>
+      </div>
     `;
+    combatantsList.appendChild(combatantDiv);
+
+    if (combatant.type === 'opponent') {
+      const collapsibleButton = combatantDiv.querySelector('.collapsible');
+      const contentDiv = combatantDiv.querySelector('.content');
+      collapsibleButton.addEventListener('click', function () {
+        this.classList.toggle('active');
+        contentDiv.style.display = contentDiv.style.display === 'block' ? 'none' : 'block';
+      });
+    }
+  });
+
+  // Collapse all opponents by default
+  document.querySelectorAll('.collapsible').forEach(button => {
+    button.classList.remove('active');
+    button.nextElementSibling.style.display = 'none';
+  });
+}
+
+function generateLocationHTML(location, armor, id) {
+  return `
+    <label for="${location.toLowerCase().replace(' ', '')}${id}">${location}:</label>
+    <input type="number" id="${location.toLowerCase().replace(' ', '')}${id}" value="${armor}" readonly>
+    <div class="damage-effects">
+      ${generateDamageEffectSelect(`${location.toLowerCase().replace(' ', '')}Effect1${id}`)}
+      ${generateDamageEffectSelect(`${location.toLowerCase().replace(' ', '')}Effect2${id}`)}
+      ${generateDamageEffectSelect(`${location.toLowerCase().replace(' ', '')}Effect3${id}`)}
+    </div>
+  `;
 }
 
 function generateDamageEffectSelect(id) {
   return `
-        <select id="${id}">
-            <option value=""></option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="T">T</option>
-        </select>
-    `;
+    <select id="${id}">
+      <option value=""></option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+      <option value="T">T</option>
+    </select>
+  `;
+}
+
+function addPlayer() {
+  const playerName = document.getElementById('playerName').value.trim();
+  const playerSpeed = parseInt(document.getElementById('playerSpeed').value, 10);
+
+  if (playerName === '' || isNaN(playerSpeed)) {
+    alert('Please enter a valid name and speed.');
+    return;
+  }
+
+  players.push({ type: 'player', id: generateUniqueId(), name: playerName, speed: playerSpeed });
+  renderCombatants([...players, ...opponents]);
+}
+
+function removePlayer(id) {
+  players = players.filter(player => player.id !== id);
+  renderCombatants([...players, ...opponents]);
+}
+
+function updatePlayerSpeed(id, speed) {
+  const player = players.find(player => player.id === id);
+  if (player) {
+    player.speed = parseInt(speed, 10);
+    renderCombatants([...players, ...opponents]);
+  }
+}
+
+function getOpponentsFromDOM() {
+  return opponents.map(opponent => {
+    const id = opponent.id;
+    const genderElem = document.getElementById(`gender${id}`);
+    const nameElem = document.getElementById(`name${id}`);
+    const attackElem = document.getElementById(`attack${id}`);
+    const defenceElem = document.getElementById(`defence${id}`);
+    const speedElem = document.getElementById(`speed${id}`);
+    const hpElem = document.getElementById(`hp${id}`);
+    const weaponElem = document.getElementById(`weapon${id}`);
+    const damageElem = document.getElementById(`damage${id}`);
+    const headElem = document.getElementById(`head${id}`);
+    const bodyElem = document.getElementById(`body${id}`);
+    const leftHandElem = document.getElementById(`lefthand${id}`);
+    const rightHandElem = document.getElementById(`righthand${id}`);
+    const leftLegElem = document.getElementById(`leftleg${id}`);
+    const rightLegElem = document.getElementById(`rightleg${id}`);
+
+    return {
+      type: 'opponent',
+      id,
+      gender: genderElem ? genderElem.value : '',
+      name: nameElem ? nameElem.value : '',
+      attack: attackElem ? parseInt(attackElem.value, 10) : 0,
+      defence: defenceElem ? parseInt(defenceElem.value, 10) : 0,
+      speed: speedElem ? parseInt(speedElem.value, 10) : 0,
+      hp: hpElem ? parseInt(hpElem.value, 10) : 0,
+      weapon: weaponElem ? weaponElem.value : '',
+      damage: damageElem ? parseInt(damageElem.value, 10) : 0,
+      headArmor: headElem ? parseInt(headElem.value, 10) : 0,
+      bodyArmor: bodyElem ? parseInt(bodyElem.value, 10) : 0,
+      leftHandArmor: leftHandElem ? parseInt(leftHandElem.value, 10) : 0,
+      rightHandArmor: rightHandElem ? parseInt(rightHandElem.value, 10) : 0,
+      leftLegArmor: leftLegElem ? parseInt(leftLegElem.value, 10) : 0,
+      rightLegArmor: rightLegElem ? parseInt(rightLegElem.value, 10) : 0,
+      headEffect1: document.getElementById(`headEffect1${id}`) ? document.getElementById(`headEffect1${id}`).value : '',
+      headEffect2: document.getElementById(`headEffect2${id}`) ? document.getElementById(`headEffect2${id}`).value : '',
+      headEffect3: document.getElementById(`headEffect3${id}`) ? document.getElementById(`headEffect3${id}`).value : '',
+      bodyEffect1: document.getElementById(`bodyEffect1${id}`) ? document.getElementById(`bodyEffect1${id}`).value : '',
+      bodyEffect2: document.getElementById(`bodyEffect2${id}`) ? document.getElementById(`bodyEffect2${id}`).value : '',
+      bodyEffect3: document.getElementById(`bodyEffect3${id}`) ? document.getElementById(`bodyEffect3${id}`).value : '',
+      leftHandEffect1: document.getElementById(`lefthandEffect1${id}`) ? document.getElementById(`lefthandEffect1${id}`).value : '',
+      leftHandEffect2: document.getElementById(`lefthandEffect2${id}`) ? document.getElementById(`lefthandEffect2${id}`).value : '',
+      leftHandEffect3: document.getElementById(`lefthandEffect3${id}`) ? document.getElementById(`lefthandEffect3${id}`).value : '',
+      rightHandEffect1: document.getElementById(`righthandEffect1${id}`) ? document.getElementById(`righthandEffect1${id}`).value : '',
+      rightHandEffect2: document.getElementById(`righthandEffect2${id}`) ? document.getElementById(`righthandEffect2${id}`).value : '',
+      rightHandEffect3: document.getElementById(`righthandEffect3${id}`) ? document.getElementById(`righthandEffect3${id}`).value : '',
+      leftLegEffect1: document.getElementById(`leftlegEffect1${id}`) ? document.getElementById(`leftlegEffect1${id}`).value : '',
+      leftLegEffect2: document.getElementById(`leftlegEffect2${id}`) ? document.getElementById(`leftlegEffect2${id}`).value : '',
+      leftLegEffect3: document.getElementById(`leftlegEffect3${id}`) ? document.getElementById(`leftlegEffect3${id}`).value : '',
+      rightLegEffect1: document.getElementById(`rightlegEffect1${id}`) ? document.getElementById(`rightlegEffect1${id}`).value : '',
+      rightLegEffect2: document.getElementById(`rightlegEffect2${id}`) ? document.getElementById(`rightlegEffect2${id}`).value : '',
+      rightLegEffect3: document.getElementById(`rightlegEffect3${id}`) ? document.getElementById(`rightlegEffect3${id}`).value : '',
+      description: document.getElementById(`description${id}`) ? document.getElementById(`description${id}`).value : '',
+      isCollapsed: document.getElementById(id) ? document.getElementById(id).querySelector('.content').style.display !== 'block' : false
+    };
+  });
 }
 
 function saveState() {
@@ -144,43 +272,10 @@ function saveState() {
     return;
   }
 
-  const opponents = document.querySelectorAll('.opponent');
-  const saveData = Array.from(opponents).map((opponent, index) => {
-    return {
-      gender: document.getElementById(`gender${index}`).value,
-      name: document.getElementById(`name${index}`).value,
-      attack: document.getElementById(`attack${index}`).value,
-      defence: document.getElementById(`defence${index}`).value,
-      speed: document.getElementById(`speed${index}`).value,
-      hp: document.getElementById(`hp${index}`).value,
-      weapon: document.getElementById(`weapon${index}`).value,
-      damage: document.getElementById(`damage${index}`).value,
-      headArmor: document.getElementById(`head${index}`).value,
-      bodyArmor: document.getElementById(`body${index}`).value,
-      leftHandArmor: document.getElementById(`lefthand${index}`).value,
-      rightHandArmor: document.getElementById(`righthand${index}`).value,
-      leftLegArmor: document.getElementById(`leftleg${index}`).value,
-      rightLegArmor: document.getElementById(`rightleg${index}`).value,
-      headEffect1: document.getElementById(`headEffect1${index}`).value,
-      headEffect2: document.getElementById(`headEffect2${index}`).value,
-      headEffect3: document.getElementById(`headEffect3${index}`).value,
-      bodyEffect1: document.getElementById(`bodyEffect1${index}`).value,
-      bodyEffect2: document.getElementById(`bodyEffect2${index}`).value,
-      bodyEffect3: document.getElementById(`bodyEffect3${index}`).value,
-      leftHandEffect1: document.getElementById(`lefthandEffect1${index}`).value,
-      leftHandEffect2: document.getElementById(`lefthandEffect2${index}`).value,
-      leftHandEffect3: document.getElementById(`lefthandEffect3${index}`).value,
-      rightHandEffect1: document.getElementById(`righthandEffect1${index}`).value,
-      rightHandEffect2: document.getElementById(`righthandEffect2${index}`).value,
-      rightHandEffect3: document.getElementById(`righthandEffect3${index}`).value,
-      leftLegEffect1: document.getElementById(`leftlegEffect1${index}`).value,
-      leftLegEffect2: document.getElementById(`leftlegEffect2${index}`).value,
-      leftLegEffect3: document.getElementById(`leftlegEffect3${index}`).value,
-      rightLegEffect1: document.getElementById(`rightlegEffect1${index}`).value,
-      rightLegEffect2: document.getElementById(`rightlegEffect2${index}`).value,
-      rightLegEffect3: document.getElementById(`rightlegEffect3${index}`).value,
-    };
-  });
+  const saveData = {
+    players,
+    opponents: getOpponentsFromDOM()
+  };
 
   localStorage.setItem(saveName, JSON.stringify(saveData));
   updateLoadSelect();
@@ -194,79 +289,10 @@ function loadState() {
   }
 
   const saveData = JSON.parse(localStorage.getItem(saveName));
-  const opponentsList = document.getElementById('opponentsList');
-  opponentsList.innerHTML = '';
+  players = saveData.players;
+  opponents = saveData.opponents;
 
-  saveData.forEach((opponent, index) => {
-    const opponentDiv = document.createElement('div');
-    opponentDiv.classList.add('opponent');
-
-    opponentDiv.innerHTML = `
-            <h3>Opponent ${index + 1}</h3>
-            <div class="stats-grid">
-                <div>
-                    <label for="gender${index}">Gender:</label>
-                    <input type="text" id="gender${index}" value="${opponent.gender}" >
-                </div>
-                <div>
-                    <label for="name${index}">Name:</label>
-                    <input type="text" id="name${index}" value="${opponent.name}" >
-                </div>
-                <div>
-                    <label for="attack${index}">Attack:</label>
-                    <input type="number" id="attack${index}" value="${opponent.attack}" >
-                </div>
-                <div>
-                    <label for="defence${index}">Defence:</label>
-                    <input type="number" id="defence${index}" value="${opponent.defence}" >
-                </div>
-                <div>
-                    <label for="speed${index}">Speed:</label>
-                    <input type="number" id="speed${index}" value="${opponent.speed}" >
-                </div>
-                <div>
-                    <label for="hp${index}">HP:</label>
-                    <input type="number" id="hp${index}" value="${opponent.hp}" >
-                </div>
-                <div>
-                    <label for="weapon${index}">Weapon:</label>
-                    <input type="text" id="weapon${index}" value="${opponent.weapon}" >
-                </div>
-                <div>
-                    <label for="damage${index}">Damage:</label>
-                    <input type="number" id="damage${index}" value="${opponent.damage}" >
-                </div>
-            </div>
-            <h4>Damage Effects</h4>
-            ${generateLocationHTML('Head', opponent.headArmor, index)}
-            ${generateLocationHTML('Body', opponent.bodyArmor, index)}
-            ${generateLocationHTML('Left Hand', opponent.leftHandArmor, index)}
-            ${generateLocationHTML('Right Hand', opponent.rightHandArmor, index)}
-            ${generateLocationHTML('Left Leg', opponent.leftLegArmor, index)}
-            ${generateLocationHTML('Right Leg', opponent.rightLegArmor, index)}
-        `;
-
-    opponentsList.appendChild(opponentDiv);
-
-    document.getElementById(`headEffect1${index}`).value = opponent.headEffect1;
-    document.getElementById(`headEffect2${index}`).value = opponent.headEffect2;
-    document.getElementById(`headEffect3${index}`).value = opponent.headEffect3;
-    document.getElementById(`bodyEffect1${index}`).value = opponent.bodyEffect1;
-    document.getElementById(`bodyEffect2${index}`).value = opponent.bodyEffect2;
-    document.getElementById(`bodyEffect3${index}`).value = opponent.bodyEffect3;
-    document.getElementById(`lefthandEffect1${index}`).value = opponent.leftHandEffect1;
-    document.getElementById(`lefthandEffect2${index}`).value = opponent.leftHandEffect2;
-    document.getElementById(`lefthandEffect3${index}`).value = opponent.leftHandEffect3;
-    document.getElementById(`righthandEffect1${index}`).value = opponent.rightHandEffect1;
-    document.getElementById(`righthandEffect2${index}`).value = opponent.rightHandEffect2;
-    document.getElementById(`righthandEffect3${index}`).value = opponent.rightHandEffect3;
-    document.getElementById(`leftlegEffect1${index}`).value = opponent.leftLegEffect1;
-    document.getElementById(`leftlegEffect2${index}`).value = opponent.leftLegEffect2;
-    document.getElementById(`leftlegEffect3${index}`).value = opponent.leftLegEffect3;
-    document.getElementById(`rightlegEffect1${index}`).value = opponent.rightLegEffect1;
-    document.getElementById(`rightlegEffect2${index}`).value = opponent.rightLegEffect2;
-    document.getElementById(`rightlegEffect3${index}`).value = opponent.rightLegEffect3;
-  });
+  renderCombatants([...players, ...opponents]);
 }
 
 function updateLoadSelect() {
@@ -279,5 +305,13 @@ function updateLoadSelect() {
   }
 }
 
+function sortCombatants() {
+  const allCombatants = [...players, ...getOpponentsFromDOM()];
+  allCombatants.sort((a, b) => b.speed - a.speed);
+  renderCombatants(allCombatants);
+}
+
 // Initialize the load select with existing saves on page load
-document.addEventListener('DOMContentLoaded', updateLoadSelect);
+document.addEventListener('DOMContentLoaded', () => {
+  updateLoadSelect();
+});
