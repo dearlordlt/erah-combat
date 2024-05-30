@@ -4,13 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTRPG Combat Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .container {
+            padding: 10px;
+            max-width: 800px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+        }
+        .opponent {
+            border: 1px solid #ddd;
+            padding: 5px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            margin: 3px 0;
+        }
+        input, select {
+            width: 100%;
+            padding: 4px;
+            margin: 3px 0;
+            box-sizing: border-box;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        .damage-effects {
+            display: flex;
+            gap: 3px;
+        }
+        .damage-effects select {
+            flex: 1;
+            padding: 2px;
+        }
+        .save-load-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .save-load-container input {
+            width: auto;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        @media (max-width: 600px) {
+            .opponent {
+                font-size: 12px;
+            }
+            input, select {
+                padding: 4px;
+            }
+        }
+    </style>
     <script defer src="script.js"></script>
 </head>
 <body>
-    <h1>TTRPG Combat Setup</h1>
-    <label for="opponentsCount">Number of Opponents:</label>
-    <input type="number" id="opponentsCount" value="3">
-    <button onclick="startCombat()">Start Combat</button>
-    <div id="opponentsList"></div>
+    <div class="container">
+        <h1>TTRPG Combat Setup</h1>
+        <label for="opponentsCount">Number of Opponents:</label>
+        <input type="number" id="opponentsCount" value="3">
+        <button onclick="startCombat()">Start Combat</button>
+        <div id="opponentsList"></div>
+        <div class="save-load-container">
+            <input type="text" id="saveName" placeholder="Save Name">
+            <button onclick="saveState()">Save</button>
+            <select id="loadSelect">
+                <option value="">Select Save</option>
+            </select>
+            <button onclick="loadState()">Load</button>
+        </div>
+    </div>
 </body>
 </html>
