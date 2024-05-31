@@ -1,3 +1,24 @@
+Vue.component('opponent-details', {
+  template: '#opponent-details-template',
+  props: ['combatant'],
+  methods: {
+    updateEffect(location, { index, value }) {
+      this.$emit('update', { location, index, value });
+    }
+  }
+});
+
+Vue.component('damage-effect', {
+  template: '#damage-effect-template',
+  props: ['location', 'armor', 'effects'],
+  methods: {
+    updateEffect(event) {
+      const index = this.effects.findIndex(effect => effect === event.target.value);
+      this.$emit('update', { index, value: event.target.value });
+    }
+  }
+});
+
 new Vue({
   el: '#app',
   data: {
@@ -43,6 +64,11 @@ new Vue({
       this.opponents = Array.from({ length: this.opponentsCount }, () => this.createOpponent());
       this.sortCombatants();
     },
+    newTurn() {
+      this.opponents.forEach(opponent => {
+        opponent.currentSpeed = opponent.speed;
+      });
+    },
     createOpponent() {
       const gender = Math.random() < 0.5 ? 'male' : 'female';
       const name = this.getRandomName(gender);
@@ -65,6 +91,7 @@ new Vue({
         attack,
         defence,
         speed,
+        currentSpeed: speed,
         hp,
         weapon,
         damage,
@@ -170,6 +197,21 @@ new Vue({
         const key = localStorage.key(i);
         this.savedStates.push(key);
       }
+    },
+    attack(combatant) {
+      const damageReduction = combatant.damage >= 4 ? 4 : combatant.damage >= 3 ? 3 : 2;
+      combatant.currentSpeed = Math.max(0, combatant.currentSpeed - damageReduction);
+    },
+    defend(combatant) {
+      const defenseReduction = this.getRandomStat(2, 3);
+      combatant.currentSpeed = Math.max(0, combatant.currentSpeed - defenseReduction);
+    },
+    updateEffect(location, { index, value }) {
+      this.combatants.forEach(combatant => {
+        if (combatant[`${location}Effect${index + 1}`] !== undefined) {
+          combatant[`${location}Effect${index + 1}`] = value;
+        }
+      });
     }
   },
   computed: {

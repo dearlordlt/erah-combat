@@ -11,16 +11,15 @@
     <div id="app" class="container mx-auto p-4">
         <h1 class="text-2xl text-center">ERAH Combat Setup</h1>
         
-        <!-- Number of Opponents and Start Combat button on one line -->
         <div class="flex items-center mt-4">
             <label for="opponentsCount" class="mr-2">Number of Opponents:</label>
             <input type="number" id="opponentsCount" v-model="opponentsCount" class="w-full p-2 border rounded mr-2">
             <button @click="startCombat" class="bg-blue-500 text-white py-2 px-4 rounded whitespace-nowrap">Start Combat</button>
+            <button @click="newTurn" class="bg-purple-500 text-white py-2 px-4 rounded ml-2 whitespace-nowrap">New Turn</button>
         </div>
 
         <h2 class="text-xl text-center mt-6">Add Player</h2>
 
-        <!-- Add Player form components in one line -->
         <div class="flex items-center mt-2">
             <input type="text" v-model="newPlayer.name" placeholder="Player Name" class="w-full p-2 border rounded mr-2">
             <input type="number" v-model="newPlayer.speed" placeholder="Speed" class="w-full p-2 border rounded mr-2">
@@ -38,171 +37,13 @@
             </template>
             <template v-else>
                 <button @click="combatant.isCollapsed = !combatant.isCollapsed" class="w-full text-left bg-gray-200 p-2 rounded mt-2">
-                    Opponent: {{ combatant.name }} (Speed: {{ combatant.speed }})
-                    <span v-if="combatant.isCollapsed">
-                        - Attack: {{ combatant.attack }}, Defense: {{ combatant.defence }}, Weapon: {{ combatant.weapon }}, Damage: {{ combatant.damage }}
-                    </span>
+                    Opponent: {{ combatant.name }} (Speed: {{ combatant.speed }} / CS: {{ combatant.currentSpeed }})
+                    - Attack: {{ combatant.attack }}, Defense: {{ combatant.defence }}, Weapon: {{ combatant.weapon }}, Damage: {{ combatant.damage }}
+                    <button :disabled="combatant.currentSpeed <= 0" @click="attack(combatant)" class="text-red-500 ml-2">⚔️</button>
+                    <button :disabled="combatant.currentSpeed <= 0" @click="defend(combatant)" class="text-blue-500 ml-2">🛡️</button>
                 </button>
                 <div v-show="!combatant.isCollapsed" class="mt-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label>Gender:</label><p class="w-full p-1 border rounded">{{ combatant.gender }}</p></div>
-                        <div><label>Name:</label><p class="w-full p-1 border rounded">{{ combatant.name }}</p></div>
-                        <div><label>Attack:</label><p class="w-full p-1 border rounded">{{ combatant.attack }}</p></div>
-                        <div><label>Defense:</label><p class="w-full p-1 border rounded">{{ combatant.defence }}</p></div>
-                        <div><label>Speed:</label><p class="w-full p-1 border rounded">{{ combatant.speed }}</p></div>
-                        <div><label>HP:</label><p class="w-full p-1 border rounded">{{ combatant.hp }}</p></div>
-                        <div><label>Weapon:</label><p class="w-full p-1 border rounded">{{ combatant.weapon }}</p></div>
-                        <div><label>Damage:</label><p class="w-full p-1 border rounded">{{ combatant.damage }}</p></div>
-                    </div>
-                    <h4 class="font-bold mt-4">Damage Effects</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label>Head:</label>
-                            <p class="w-full p-1 border rounded">{{ combatant.headArmor }}</p>
-                            <div class="flex space-x-2">
-                                <select v-model="combatant.headEffect1" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.headEffect2" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.headEffect3" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label>Body:</label>
-                            <p class="w-full p-1 border rounded">{{ combatant.bodyArmor }}</p>
-                            <div class="flex space-x-2">
-                                <select v-model="combatant.bodyEffect1" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.bodyEffect2" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.bodyEffect3" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label>Left Hand:</label>
-                            <p class="w-full p-1 border rounded">{{ combatant.leftHandArmor }}</p>
-                            <div class="flex space-x-2">
-                                <select v-model="combatant.leftHandEffect1" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.leftHandEffect2" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.leftHandEffect3" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label>Right Hand:</label>
-                            <p class="w-full p-1 border rounded">{{ combatant.rightHandArmor }}</p>
-                            <div class="flex space-x-2">
-                                <select v-model="combatant.rightHandEffect1" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.rightHandEffect2" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.rightHandEffect3" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label>Left Leg:</label>
-                            <p class="w-full p-1 border rounded">{{ combatant.leftLegArmor }}</p>
-                            <div class="flex space-x-2">
-                                <select v-model="combatant.leftLegEffect1" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.leftLegEffect2" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.leftLegEffect3" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label>Right Leg:</label>
-                            <p class="w-full p-1 border rounded">{{ combatant.rightLegArmor }}</p>
-                            <div class="flex space-x-2">
-                                <select v-model="combatant.rightLegEffect1" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.rightLegEffect2" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                                <select v-model="combatant.rightLegEffect3" class="w-full p-1 border rounded">
-                                    <option value=""></option>
-                                    <option value="T">T</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <h4 class="font-bold mt-4">Description</h4>
-                    <textarea v-model="combatant.description" rows="2" class="w-full p-1 border rounded"></textarea>
+                    <opponent-details :combatant="combatant" @attack="attack" @defend="defend"></opponent-details>
                 </div>
             </template>
         </div>
@@ -216,6 +57,57 @@
             <button @click="loadState" class="bg-green-500 text-white py-2 px-4 rounded ml-2 whitespace-nowrap">Load</button>
         </div>
     </div>
+
+    <template id="opponent-details-template">
+        <div>
+            <div class="grid grid-cols-3 gap-2">
+                <div><span class="font-bold">Gender:</span> {{ combatant.gender }}</div>
+                <div><span class="font-bold">Name:</span> {{ combatant.name }}</div>
+                <div><span class="font-bold">Attack:</span> {{ combatant.attack }}</div>
+                <div><span class="font-bold">Defense:</span> {{ combatant.defence }}</div>
+                <div><span class="font-bold">Speed:</span> {{ combatant.speed }}</div>
+                <div><span class="font-bold">HP:</span> {{ combatant.hp }}</div>
+                <div><span class="font-bold">Weapon:</span> {{ combatant.weapon }}</div>
+                <div><span class="font-bold">Damage:</span> {{ combatant.damage }}</div>
+            </div>
+            <h4 class="font-bold mt-4">Damage Effects</h4>
+            <div class="grid grid-cols-2 gap-2">
+                <damage-effect location="Head" :armor="combatant.headArmor" :effects="[combatant.headEffect1, combatant.headEffect2, combatant.headEffect3]" @update="updateEffect('head', $event)"></damage-effect>
+                <damage-effect location="Body" :armor="combatant.bodyArmor" :effects="[combatant.bodyEffect1, combatant.bodyEffect2, combatant.bodyEffect3]" @update="updateEffect('body', $event)"></damage-effect>
+                <damage-effect location="Left Hand" :armor="combatant.leftHandArmor" :effects="[combatant.leftHandEffect1, combatant.leftHandEffect2, combatant.leftHandEffect3]" @update="updateEffect('leftHand', $event)"></damage-effect>
+                <damage-effect location="Right Hand" :armor="combatant.rightHandArmor" :effects="[combatant.rightHandEffect1, combatant.rightHandEffect2, combatant.rightHandEffect3]" @update="updateEffect('rightHand', $event)"></damage-effect>
+                <damage-effect location="Left Leg" :armor="combatant.leftLegArmor" :effects="[combatant.leftLegEffect1, combatant.leftLegEffect2, combatant.leftLegEffect3]" @update="updateEffect('leftLeg', $event)"></damage-effect>
+                <damage-effect location="Right Leg" :armor="combatant.rightLegArmor" :effects="[combatant.rightLegEffect1, combatant.rightLegEffect2, combatant.rightLegEffect3]" @update="updateEffect('rightLeg', $event)"></damage-effect>
+            </div>
+            <h4 class="font-bold mt-4">Description</h4>
+            <textarea v-model="combatant.description" rows="2" class="w-full p-1 border rounded"></textarea>
+        </div>
+    </template>
+
+    <template id="damage-effect-template">
+        <div class="border p-2 rounded flex items-center space-x-2">
+            <span class="font-bold whitespace-nowrap">{{ location }} 🛡️ {{ armor }}</span>
+            <select v-model="effects[0]" @change="updateEffect" class="w-full p-1 border rounded">
+                <option value=""></option>
+                <option value="T">T</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+            <select v-model="effects[1]" @change="updateEffect" class="w-full p-1 border rounded">
+                <option value=""></option>
+                <option value="T">T</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+            <select v-model="effects[2]" @change="updateEffect" class="w-full p-1 border rounded">
+                <option value=""></option>
+                <option value="T">T</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+        </div>
+    </template>
+
     <script src="script.js"></script>
 </body>
 </html>
