@@ -58,7 +58,7 @@
                             <span v-if="combatant.isCollapsed">⬇️</span>
                             <span v-else>⬆️</span>
                         </button>
-                        <span :class="{ 'strikethrough': combatant.isDead }" class="ml-2">#{{ index + 1 }} Opponent: {{ combatant.name }} (Speed: {{ combatant.speed }} / CS: {{ combatant.currentSpeed }}) - Attack: {{ combatant.attack }}, Defense: {{ combatant.defence }}, Weapon: {{ combatant.weapon }}, Damage: {{ combatant.damage }}</span>
+                        <span :class="{ 'strikethrough': combatant.isDead }" class="ml-2">#{{ getOpponentIndex(index) }} Opponent: {{ combatant.name }} (Speed: {{ combatant.speed }} / CS: {{ combatant.currentSpeed }}) - Attack: {{ combatant.attack }}, Defense: {{ combatant.defence }}, Weapon: {{ combatant.weapon }}, Damage: {{ combatant.damage }}</span>
                     </div>
                     <div class="flex space-x-2">
                         <button :disabled="buttonsDisabled || combatant.currentSpeed <= 0 || combatant.isDead" @click="attack(combatant)" :class="['bg-red-500 text-white py-2 px-2 rounded flex items-center justify-center h-full', { 'disabled-button': buttonsDisabled || combatant.currentSpeed <= 0 || combatant.isDead, 'button-clicked': !buttonsDisabled }]">⚔️</button>
@@ -66,7 +66,7 @@
                     </div>
                 </div>
                 <div v-show="!combatant.isCollapsed" class="mt-2">
-                    <opponent-details :combatant="combatant" @update-effect="updateEffect"></opponent-details>
+                    <opponent-details :combatant="combatant" :combatant-index="index" @update-effect="updateEffect"></opponent-details>
                 </div>
             </template>
         </div>
@@ -103,12 +103,12 @@
             </div>
             <h4 class="font-bold mt-4">Damage Effects</h4>
             <div class="grid grid-cols-2 gap-2">
-                <damage-effect location="Head" :armor="combatant.headArmor" :effects="[combatant.headEffect1, combatant.headEffect2, combatant.headEffect3]" @update="updateEffect('head', $event)"></damage-effect>
-                <damage-effect location="Body" :armor="combatant.bodyArmor" :effects="[combatant.bodyEffect1, combatant.bodyEffect2, combatant.bodyEffect3]" @update="updateEffect('body', $event)"></damage-effect>
-                <damage-effect location="Left Hand" :armor="combatant.leftHandArmor" :effects="[combatant.leftHandEffect1, combatant.leftHandEffect2, combatant.leftHandEffect3]" @update="updateEffect('leftHand', $event)"></damage-effect>
-                <damage-effect location="Right Hand" :armor="combatant.rightHandArmor" :effects="[combatant.rightHandEffect1, combatant.rightHandEffect2, combatant.rightHandEffect3]" @update="updateEffect('rightHand', $event)"></damage-effect>
-                <damage-effect location="Left Leg" :armor="combatant.leftLegArmor" :effects="[combatant.leftLegEffect1, combatant.leftLegEffect2, combatant.leftLegEffect3]" @update="updateEffect('leftLeg', $event)"></damage-effect>
-                <damage-effect location="Right Leg" :armor="combatant.rightLegArmor" :effects="[combatant.rightLegEffect1, combatant.rightLegEffect2, combatant.rightLegEffect3]" @update="updateEffect('rightLeg', $event)"></damage-effect>
+                <damage-effect location="Head" :armor="combatant.headArmor" :effects="[combatant.headEffect1, combatant.headEffect2, combatant.headEffect3]" :combatant-index="combatantIndex" @update="updateEffect('head', $event)"></damage-effect>
+                <damage-effect location="Body" :armor="combatant.bodyArmor" :effects="[combatant.bodyEffect1, combatant.bodyEffect2, combatant.bodyEffect3]" :combatant-index="combatantIndex" @update="updateEffect('body', $event)"></damage-effect>
+                <damage-effect location="Left Hand" :armor="combatant.leftHandArmor" :effects="[combatant.leftHandEffect1, combatant.leftHandEffect2, combatant.leftHandEffect3]" :combatant-index="combatantIndex" @update="updateEffect('leftHand', $event)"></damage-effect>
+                <damage-effect location="Right Hand" :armor="combatant.rightHandArmor" :effects="[combatant.rightHandEffect1, combatant.rightHandEffect2, combatant.rightHandEffect3]" :combatant-index="combatantIndex" @update="updateEffect('rightHand', $event)"></damage-effect>
+                <damage-effect location="Left Leg" :armor="combatant.leftLegArmor" :effects="[combatant.leftLegEffect1, combatant.leftLegEffect2, combatant.leftLegEffect3]" :combatant-index="combatantIndex" @update="updateEffect('leftLeg', $event)"></damage-effect>
+                <damage-effect location="Right Leg" :armor="combatant.rightLegArmor" :effects="[combatant.rightLegEffect1, combatant.rightLegEffect2, combatant.rightLegEffect3]" :combatant-index="combatantIndex" @update="updateEffect('rightLeg', $event)"></damage-effect>
             </div>
             <h4 class="font-bold mt-4">Description</h4>
             <textarea v-model="combatant.description" rows="2" class="w-full p-1 border rounded"></textarea>
@@ -118,19 +118,19 @@
     <template id="damage-effect-template">
         <div class="border p-2 rounded flex items-center space-x-2">
             <span class="font-bold whitespace-nowrap">{{ location }} 🛡️ {{ armor }}</span>
-            <select v-model="effects[0]" @change="updateEffect" class="w-full p-1 border rounded">
+            <select v-model="effects[0]" @change="updateEffect(0)" class="w-full p-1 border rounded">
                 <option value=""></option>
                 <option value="T">T</option>
                 <option value="B">B</option>
                 <option value="C">C</option>
             </select>
-            <select v-model="effects[1]" @change="updateEffect" class="w-full p-1 border rounded">
+            <select v-model="effects[1]" @change="updateEffect(1)" class="w-full p-1 border rounded">
                 <option value=""></option>
                 <option value="T">T</option>
                 <option value="B">B</option>
                 <option value="C">C</option>
             </select>
-            <select v-model="effects[2]" @change="updateEffect" class="w-full p-1 border rounded">
+            <select v-model="effects[2]" @change="updateEffect(2)" class="w-full p-1 border rounded">
                 <option value=""></option>
                 <option value="T">T</option>
                 <option value="B">B</option>

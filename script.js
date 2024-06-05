@@ -1,6 +1,6 @@
 Vue.component('opponent-details', {
   template: '#opponent-details-template',
-  props: ['combatant'],
+  props: ['combatant', 'combatantIndex'],
   methods: {
     markAsDead() {
       this.combatant.isDead = !this.combatant.isDead;
@@ -11,18 +11,19 @@ Vue.component('opponent-details', {
       }
     },
     updateEffect(location, { index, value }) {
-      this.$emit('update-effect', { location, index, value });
+      this.$emit('update-effect', { location, index, value, combatantIndex: this.combatantIndex });
     }
   }
 });
 
 Vue.component('damage-effect', {
   template: '#damage-effect-template',
-  props: ['location', 'armor', 'effects'],
+  props: ['location', 'armor', 'effects', 'combatantIndex'],
   methods: {
-    updateEffect(event) {
-      const index = this.effects.findIndex(effect => effect === event.target.value);
-      this.$emit('update', { index, value: event.target.value });
+    updateEffect(index) {
+      return (event) => {
+        this.$emit('update', { index, value: event.target.value });
+      };
     }
   }
 });
@@ -243,12 +244,11 @@ new Vue({
       const defenseReduction = this.getRandomStat(2, 3);
       combatant.currentSpeed = Math.max(0, combatant.currentSpeed - defenseReduction);
     },
-    updateEffect({ location, index, value }) {
-      this.combatants.forEach(combatant => {
-        if (combatant[`${location}Effect${index + 1}`] !== undefined) {
-          combatant[`${location}Effect${index + 1}`] = value;
-        }
-      });
+    updateEffect({ location, index, value, combatantIndex }) {
+      const combatant = this.sortedCombatants[combatantIndex];
+      if (combatant && combatant[`${location}Effect${index + 1}`] !== undefined) {
+        combatant[`${location}Effect${index + 1}`] = value;
+      }
     },
     disableButtons() {
       this.buttonsDisabled = true;
@@ -262,6 +262,15 @@ new Vue({
         const key = localStorage.key(i);
         this.savedStates.push(key);
       }
+    },
+    getOpponentIndex(index) {
+      let opponentCount = 0;
+      for (let i = 0; i <= index; i++) {
+        if (this.sortedCombatants[i].type === 'opponent') {
+          opponentCount++;
+        }
+      }
+      return opponentCount;
     }
   },
   computed: {
