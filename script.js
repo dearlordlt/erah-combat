@@ -48,7 +48,12 @@ new Vue({
     buttonsDisabled: false,
     combatLog: [], // New data property for combat log
     isLogModalVisible: false, // New data property for modal visibility
-    turnNumber: 0 // New data property for tracking turns
+    turnNumber: 1, // Start turns from 1
+    currentTurnRolls: [], // Track rolls of the current turn
+    tooltipVisible: false, // Tooltip visibility
+    tooltipContent: '', // Tooltip content
+    tooltipX: 0, // Tooltip X position
+    tooltipY: 0 // Tooltip Y position
   },
   mounted() {
     this.updateLoadSelect();
@@ -83,17 +88,21 @@ new Vue({
         }
         this.opponents = Array.from({ length: this.opponentsCount }, () => this.createOpponent());
         this.sortCombatants();
-        this.turnNumber = 0; // Reset turn number
+        this.turnNumber = 1; // Reset turn number to 1
         this.combatLog = []; // Reset combat log
+        this.currentTurnRolls = []; // Reset current turn rolls
       }
     },
     newTurn() {
       if (confirm("Are you sure you want to start a new turn?")) {
         this.opponents.forEach(opponent => {
           opponent.currentSpeed = opponent.speed;
+          opponent.rolls.attack = []; // Clear attack rolls
+          opponent.rolls.defense = []; // Clear defense rolls
         });
         this.turnNumber++;
         this.logAction('New turn started.', this.turnNumber);
+        this.currentTurnRolls = []; // Reset current turn rolls
       }
     },
     createOpponent() {
@@ -148,7 +157,11 @@ new Vue({
         rightLegEffect3: '',
         description: "",
         isCollapsed: true,
-        isDead: false // New property to track if the opponent is dead
+        isDead: false, // New property to track if the opponent is dead
+        rolls: {
+          attack: [],
+          defense: []
+        } // New property to track roll results
       };
     },
     calculateDamage(weapon) {
@@ -221,7 +234,7 @@ new Vue({
         this.players = saveData.players || [];
         this.opponents = saveData.opponents || [];
         this.combatLog = saveData.combatLog || []; // Load combat log from save data
-        this.turnNumber = saveData.turnNumber || 0; // Load turn number from save data
+        this.turnNumber = saveData.turnNumber || 1; // Load turn number from save data, default to 1
         this.saveName = this.selectedSave;
         this.sortCombatants(); // Sort combatants whenever the state is loaded
       }
@@ -247,7 +260,7 @@ new Vue({
       this.players = [];
       this.opponents = [];
       this.combatLog = []; // Reset combat log
-      this.turnNumber = 0; // Reset turn number
+      this.turnNumber = 1; // Reset turn number
       this.saveName = '';
       this.selectedSave = '';
       this.updateLoadSelect();
@@ -256,13 +269,39 @@ new Vue({
       this.disableButtons();
       const damageReduction = combatant.damage >= 4 ? 4 : combatant.damage >= 3 ? 3 : 2;
       combatant.currentSpeed = Math.max(0, combatant.currentSpeed - damageReduction);
-      this.logAction(`Attack: ${combatant.weapon} [${damageReduction}]`, this.turnNumber);
+
+      const diceRolls = [this.getRandomStat(1, 6), this.getRandomStat(1, 6), this.getRandomStat(1, 6)];
+      const naturalRoll = diceRolls.reduce((acc, val) => acc + val, 0);
+      const sum = naturalRoll + combatant.attack;
+      const diceLog = `${diceRolls[0]}🎲 + ${diceRolls[1]}🎲 + ${diceRolls[2]}🎲 + ${combatant.attack} = ${sum}`;
+      let emoji = '';
+      if (naturalRoll === 3 || naturalRoll === 4) emoji = '💀';
+      else if (naturalRoll === 5) emoji = '❌';
+      else if (naturalRoll >= 17) emoji = '⭐';
+      else emoji = '🎲';
+
+      combatant.rolls.attack.push({ result: sum, emoji, log: diceLog });
+      this.currentTurnRolls.push(`Attack by ${combatant.name}: ${combatant.weapon} [${damageReduction}] - ${diceLog}`);
+      this.logAction(`Attack by ${combatant.name}: ${combatant.weapon} [${damageReduction}] - ${diceLog}`, this.turnNumber);
     },
     defend(combatant) {
       this.disableButtons();
       const defenseReduction = this.getRandomStat(2, 3);
       combatant.currentSpeed = Math.max(0, combatant.currentSpeed - defenseReduction);
-      this.logAction(`Defense: [${defenseReduction}]`, this.turnNumber);
+
+      const diceRolls = [this.getRandomStat(1, 6), this.getRandomStat(1, 6), this.getRandomStat(1, 6)];
+      const naturalRoll = diceRolls.reduce((acc, val) => acc + val, 0);
+      const sum = naturalRoll + combatant.defence;
+      const diceLog = `${diceRolls[0]}🎲 + ${diceRolls[1]}🎲 + ${diceRolls[2]}🎲 + ${combatant.defence} = ${sum}`;
+      let emoji = '';
+      if (naturalRoll === 3 || naturalRoll === 4) emoji = '💀';
+      else if (naturalRoll === 5) emoji = '❌';
+      else if (naturalRoll >= 17) emoji = '⭐';
+      else emoji = '🎲';
+
+      combatant.rolls.defense.push({ result: sum, emoji, log: diceLog });
+      this.currentTurnRolls.push(`Defense by ${combatant.name}: [${defenseReduction}] - ${diceLog}`);
+      this.logAction(`Defense by ${combatant.name}: [${defenseReduction}] - ${diceLog}`, this.turnNumber);
     },
     logAction(message, turn) {
       const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -298,6 +337,16 @@ new Vue({
     },
     toggleLogModal() {
       this.isLogModalVisible = !this.isLogModalVisible;
+    },
+    showTooltip(event, content) {
+      this.tooltipContent = content;
+      this.tooltipVisible = true;
+      this.tooltipX = event.pageX - 10; // Position the tooltip to the left of the cursor
+      this.tooltipY = event.pageY + 10; // Position the tooltip 10px below the cursor
+    },
+    hideTooltip() {
+      this.tooltipVisible = false;
+      this.tooltipContent = '';
     }
   },
   computed: {
