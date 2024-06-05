@@ -48,6 +48,7 @@ new Vue({
     buttonsDisabled: false,
     combatLog: [], // New data property for combat log
     isLogModalVisible: false, // New data property for modal visibility
+    showMapModal: false, // Add this for the map modal visibility
     turnNumber: 1, // Start turns from 1
     currentTurnRolls: [], // Track rolls of the current turn
     tooltipVisible: false, // Tooltip visibility
@@ -91,6 +92,9 @@ new Vue({
         this.turnNumber = 1; // Reset turn number to 1
         this.combatLog = []; // Reset combat log
         this.currentTurnRolls = []; // Reset current turn rolls
+        if (this.$refs.combatMap) {
+          this.$refs.combatMap.generateMap(); // Add this to regenerate the map
+        }
       }
     },
     newTurn() {
@@ -190,10 +194,16 @@ new Vue({
       this.newPlayer.name = '';
       this.newPlayer.speed = null;
       this.sortCombatants(); // Sort combatants whenever a new player is added
+      if (this.$refs.combatMap) {
+        this.$refs.combatMap.generateMap(); // Add this to update the map
+      }
     },
     removePlayer(id) {
       this.players = this.players.filter(player => player.id !== id);
       this.sortCombatants(); // Sort combatants whenever a player is removed
+      if (this.$refs.combatMap) {
+        this.$refs.combatMap.generateMap(); // Add this to update the map
+      }
     },
     updatePlayerSpeed(id, speed) {
       const player = this.players.find(player => player.id === id);
@@ -237,6 +247,9 @@ new Vue({
         this.turnNumber = saveData.turnNumber || 1; // Load turn number from save data, default to 1
         this.saveName = this.selectedSave;
         this.sortCombatants(); // Sort combatants whenever the state is loaded
+        if (this.$refs.combatMap) {
+          this.$refs.combatMap.generateMap(); // Add this to update the map
+        }
       }
     },
     deleteSave() {
@@ -337,6 +350,12 @@ new Vue({
     },
     toggleLogModal() {
       this.isLogModalVisible = !this.isLogModalVisible;
+    },
+    toggleMapModal() {
+      this.showMapModal = !this.showMapModal;
+      if (this.showMapModal && this.$refs.combatMap) {
+        this.$refs.combatMap.generateMap(); // Generate the map when modal is opened
+      }
     },
     showTooltip(event, content) {
       this.tooltipContent = content;

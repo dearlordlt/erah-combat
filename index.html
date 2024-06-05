@@ -79,6 +79,7 @@
         
         <div class="text-center mt-4">
             <button @click="toggleLogModal" class="bg-gray-500 text-white py-2 px-4 rounded whitespace-nowrap">View Combat Log</button>
+            <button @click="toggleMapModal" class="bg-gray-500 text-white py-2 px-4 rounded whitespace-nowrap">View Combat Map</button>
         </div>
         
         <modal v-if="isLogModalVisible" @close="toggleLogModal">
@@ -87,6 +88,13 @@
                 <div v-for="entry in combatLog" :key="entry.timestamp">
                     {{ entry.timestamp }} - Turn {{ entry.turn }} - {{ entry.message }}
                 </div>
+            </div>
+        </modal>
+
+        <modal v-if="showMapModal" @close="toggleMapModal">
+            <h2 slot="header">Combat Map</h2>
+            <div slot="body">
+                <combat-map ref="combatMap" :players="players" :opponents="opponents"></combat-map>
             </div>
         </modal>
 
@@ -162,6 +170,25 @@
         </div>
     </template>
 
+    <template id="combat-map-template">
+        <div>
+            <div class="grid" :style="{ 'grid-template-columns': `repeat(${columns}, 1fr)`, 'grid-template-rows': `repeat(${rows}, 1fr)` }">
+                <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="grid-row">
+                    <div v-for="(cell, colIndex) in row" :key="colIndex" class="grid-cell" :class="{ 'bg-red-500': cell?.type === 'opponent' && !isDead(cell), 'bg-green-500': cell?.type === 'player', 'bg-gray-500': isDead(cell) }">
+                        <template v-if="cell">
+                            <div class="combatant-info">
+                                <span v-if="cell.type === 'opponent'">#{{ cell.index }} {{ cell.name }} ({{ cell.speed }})</span>
+                                <span v-else>{{ cell.name }}</span>
+                                <span v-if="isDead(cell)">💀</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <script src="script.js"></script>
+    <script src="map-component.js"></script>
 </body>
 </html>
