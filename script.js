@@ -6,8 +6,10 @@ Vue.component('opponent-details', {
       this.combatant.isDead = !this.combatant.isDead;
       if (this.combatant.isDead) {
         this.combatant.currentSpeed = 0; // Ensure they can't attack or defend
+        this.$emit('log-action', `Opponent ${this.combatant.name} was killed`, this.combatantIndex);
       } else {
         this.combatant.currentSpeed = this.combatant.speed; // Restore the original speed when un-killed
+        this.$emit('log-action', `Opponent ${this.combatant.name} was unkilled`, this.combatantIndex);
       }
     },
     updateEffect(location, { index, value }) {
@@ -28,6 +30,10 @@ Vue.component('damage-effect', {
   }
 });
 
+Vue.component('modal', {
+  template: '#modal-template'
+});
+
 new Vue({
   el: '#app',
   data: {
@@ -39,7 +45,10 @@ new Vue({
     selectedSave: '',
     savedStates: [],
     sortedCombatants: [],
-    buttonsDisabled: false // New data property
+    buttonsDisabled: false,
+    combatLog: [], // New data property for combat log
+    isLogModalVisible: false, // New data property for modal visibility
+    turnNumber: 0 // New data property for tracking turns
   },
   mounted() {
     this.updateLoadSelect();
@@ -74,6 +83,8 @@ new Vue({
         }
         this.opponents = Array.from({ length: this.opponentsCount }, () => this.createOpponent());
         this.sortCombatants();
+        this.turnNumber = 0; // Reset turn number
+        this.combatLog = []; // Reset combat log
       }
     },
     newTurn() {
@@ -81,7 +92,8 @@ new Vue({
         this.opponents.forEach(opponent => {
           opponent.currentSpeed = opponent.speed;
         });
-        alert("A new turn has started.");
+        this.turnNumber++;
+        this.logAction('New turn started.', this.turnNumber);
       }
     },
     createOpponent() {
@@ -190,7 +202,9 @@ new Vue({
 
       const saveData = {
         players: this.players,
-        opponents: this.opponents
+        opponents: this.opponents,
+        combatLog: this.combatLog, // Include combat log in save data
+        turnNumber: this.turnNumber // Include turn number in save data
       };
 
       localStorage.setItem(this.saveName, JSON.stringify(saveData));
@@ -206,6 +220,8 @@ new Vue({
         const saveData = JSON.parse(localStorage.getItem(this.selectedSave));
         this.players = saveData.players || [];
         this.opponents = saveData.opponents || [];
+        this.combatLog = saveData.combatLog || []; // Load combat log from save data
+        this.turnNumber = saveData.turnNumber || 0; // Load turn number from save data
         this.saveName = this.selectedSave;
         this.sortCombatants(); // Sort combatants whenever the state is loaded
       }
@@ -230,6 +246,8 @@ new Vue({
     resetState() {
       this.players = [];
       this.opponents = [];
+      this.combatLog = []; // Reset combat log
+      this.turnNumber = 0; // Reset turn number
       this.saveName = '';
       this.selectedSave = '';
       this.updateLoadSelect();
@@ -238,11 +256,17 @@ new Vue({
       this.disableButtons();
       const damageReduction = combatant.damage >= 4 ? 4 : combatant.damage >= 3 ? 3 : 2;
       combatant.currentSpeed = Math.max(0, combatant.currentSpeed - damageReduction);
+      this.logAction(`Attack: ${combatant.weapon} [${damageReduction}]`, this.turnNumber);
     },
     defend(combatant) {
       this.disableButtons();
       const defenseReduction = this.getRandomStat(2, 3);
       combatant.currentSpeed = Math.max(0, combatant.currentSpeed - defenseReduction);
+      this.logAction(`Defense: [${defenseReduction}]`, this.turnNumber);
+    },
+    logAction(message, turn) {
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      this.combatLog.push({ timestamp, turn, message });
     },
     updateEffect({ location, index, value, combatantIndex }) {
       const combatant = this.sortedCombatants[combatantIndex];
@@ -271,6 +295,9 @@ new Vue({
         }
       }
       return opponentCount;
+    },
+    toggleLogModal() {
+      this.isLogModalVisible = !this.isLogModalVisible;
     }
   },
   computed: {
