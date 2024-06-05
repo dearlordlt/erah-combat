@@ -6,6 +6,23 @@
     <title>ERAH Combat Setup</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <style>
+        .disabled-button {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .button-clicked {
+            animation: button-click 0.2s;
+        }
+        @keyframes button-click {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        .strikethrough {
+            text-decoration: line-through;
+        }
+    </style>
 </head>
 <body class="font-sans">
     <div id="app" class="container mx-auto p-4">
@@ -23,11 +40,10 @@
         <div class="flex items-center mt-2">
             <input type="text" v-model="newPlayer.name" placeholder="Player Name" class="w-full p-2 border rounded mr-2">
             <input type="number" v-model="newPlayer.speed" placeholder="Speed" class="w-full p-2 border rounded mr-2">
-            <button @click="addPlayer" class="bg-green-500 text-white py-2 px-4 rounded mr-2 whitespace-nowrap">Add Player</button>
-            <button @click="sortCombatants" class="bg-yellow-500 text-white py-2 px-4 rounded whitespace-nowrap">Sort by Speed</button>
+            <button @click="addPlayer" class="bg-green-500 text-white py-2 px-4 rounded whitespace-nowrap">Add Player</button>
         </div>
 
-        <div v-for="combatant in combatants" :key="combatant.id" class="border p-4 rounded mt-4">
+        <div v-for="(combatant, index) in combatants" :key="combatant.id" class="border p-4 rounded mt-4">
             <template v-if="combatant.type === 'player'">
                 <div class="flex justify-between items-center">
                     <span class="font-bold">Player: {{ combatant.name }}</span>
@@ -36,14 +52,21 @@
                 </div>
             </template>
             <template v-else>
-                <button @click="combatant.isCollapsed = !combatant.isCollapsed" class="w-full text-left bg-gray-200 p-2 rounded mt-2">
-                    Opponent: {{ combatant.name }} (Speed: {{ combatant.speed }} / CS: {{ combatant.currentSpeed }})
-                    - Attack: {{ combatant.attack }}, Defense: {{ combatant.defence }}, Weapon: {{ combatant.weapon }}, Damage: {{ combatant.damage }}
-                    <button :disabled="combatant.currentSpeed <= 0" @click="attack(combatant)" class="text-red-500 ml-2">⚔️</button>
-                    <button :disabled="combatant.currentSpeed <= 0" @click="defend(combatant)" class="text-blue-500 ml-2">🛡️</button>
-                </button>
+                <div class="flex justify-between items-center bg-gray-200 p-2 rounded mt-2">
+                    <div class="flex items-center">
+                        <button @click="combatant.isCollapsed = !combatant.isCollapsed" class="text-lg">
+                            <span v-if="combatant.isCollapsed">⬇️</span>
+                            <span v-else>⬆️</span>
+                        </button>
+                        <span :class="{ 'strikethrough': combatant.isDead }" class="ml-2">#{{ index + 1 }} Opponent: {{ combatant.name }} (Speed: {{ combatant.speed }} / CS: {{ combatant.currentSpeed }}) - Attack: {{ combatant.attack }}, Defense: {{ combatant.defence }}, Weapon: {{ combatant.weapon }}, Damage: {{ combatant.damage }}</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button :disabled="buttonsDisabled || combatant.currentSpeed <= 0 || combatant.isDead" @click="attack(combatant)" :class="['bg-red-500 text-white py-2 px-2 rounded flex items-center justify-center h-full', { 'disabled-button': buttonsDisabled || combatant.currentSpeed <= 0 || combatant.isDead, 'button-clicked': !buttonsDisabled }]">⚔️</button>
+                        <button :disabled="buttonsDisabled || combatant.currentSpeed <= 0 || combatant.isDead" @click="defend(combatant)" :class="['bg-blue-500 text-white py-2 px-2 rounded flex items-center justify-center h-full', { 'disabled-button': buttonsDisabled || combatant.currentSpeed <= 0 || combatant.isDead, 'button-clicked': !buttonsDisabled }]">🛡️</button>
+                    </div>
+                </div>
                 <div v-show="!combatant.isCollapsed" class="mt-2">
-                    <opponent-details :combatant="combatant" @attack="attack" @defend="defend"></opponent-details>
+                    <opponent-details :combatant="combatant" @update-effect="updateEffect"></opponent-details>
                 </div>
             </template>
         </div>
@@ -54,7 +77,8 @@
                 <option value="">Select Save</option>
                 <option v-for="save in savedStates" :value="save">{{ save }}</option>
             </select>
-            <button @click="loadState" class="bg-green-500 text-white py-2 px-4 rounded ml-2 whitespace-nowrap">Load</button>
+            <button @click="deleteSave" :disabled="!selectedSave" class="bg-red-500 text-white py-2 px-4 rounded ml-2 whitespace-nowrap">Delete</button>
+            <button @click="deleteAllSaves" class="bg-red-700 text-white py-2 px-4 rounded ml-2 whitespace-nowrap">Delete All</button>
         </div>
     </div>
 
@@ -66,9 +90,13 @@
                 <div><span class="font-bold">Attack:</span> {{ combatant.attack }}</div>
                 <div><span class="font-bold">Defense:</span> {{ combatant.defence }}</div>
                 <div><span class="font-bold">Speed:</span> {{ combatant.speed }}</div>
-                <div><span class="font-bold">HP:</span> {{ combatant.hp }}</div>
                 <div><span class="font-bold">Weapon:</span> {{ combatant.weapon }}</div>
                 <div><span class="font-bold">Damage:</span> {{ combatant.damage }}</div>
+                <div class="flex items-center">
+                    <span class="font-bold">HP:</span>
+                    <span class="ml-2">{{ combatant.hp }}</span>
+                    <button @click="markAsDead(combatant)" class="ml-2 text-red-500">💀</button>
+                </div>
             </div>
             <h4 class="font-bold mt-4">Damage Effects</h4>
             <div class="grid grid-cols-2 gap-2">

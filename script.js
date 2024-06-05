@@ -2,8 +2,16 @@ Vue.component('opponent-details', {
   template: '#opponent-details-template',
   props: ['combatant'],
   methods: {
+    markAsDead() {
+      this.combatant.isDead = !this.combatant.isDead;
+      if (this.combatant.isDead) {
+        this.combatant.currentSpeed = 0; // Ensure they can't attack or defend
+      } else {
+        this.combatant.currentSpeed = this.combatant.speed; // Restore the original speed when un-killed
+      }
+    },
     updateEffect(location, { index, value }) {
-      this.$emit('update', { location, index, value });
+      this.$emit('update-effect', { location, index, value });
     }
   }
 });
@@ -29,7 +37,8 @@ new Vue({
     saveName: '',
     selectedSave: '',
     savedStates: [],
-    sortedCombatants: []
+    sortedCombatants: [],
+    buttonsDisabled: false // New data property
   },
   mounted() {
     this.updateLoadSelect();
@@ -57,17 +66,21 @@ new Vue({
         : min + Math.floor(Math.random() * (max - min + 1));
     },
     startCombat() {
-      if (isNaN(this.opponentsCount) || this.opponentsCount < 0) {
-        alert("Please enter a valid number of opponents.");
-        return;
+      if (confirm("Are you sure you want to start combat?")) {
+        if (isNaN(this.opponentsCount) || this.opponentsCount < 0) {
+          alert("Please enter a valid number of opponents.");
+          return;
+        }
+        this.opponents = Array.from({ length: this.opponentsCount }, () => this.createOpponent());
+        this.sortCombatants();
       }
-      this.opponents = Array.from({ length: this.opponentsCount }, () => this.createOpponent());
-      this.sortCombatants();
     },
     newTurn() {
-      this.opponents.forEach(opponent => {
-        opponent.currentSpeed = opponent.speed;
-      });
+      if (confirm("Are you sure you want to start a new turn?")) {
+        this.opponents.forEach(opponent => {
+          opponent.currentSpeed = opponent.speed;
+        });
+      }
     },
     createOpponent() {
       const gender = Math.random() < 0.5 ? 'male' : 'female';
@@ -120,7 +133,8 @@ new Vue({
         rightLegEffect2: '',
         rightLegEffect3: '',
         description: "",
-        isCollapsed: true
+        isCollapsed: true,
+        isDead: false // New property to track if the opponent is dead
       };
     },
     calculateDamage(weapon) {
@@ -186,10 +200,60 @@ new Vue({
         return;
       }
 
-      const saveData = JSON.parse(localStorage.getItem(this.selectedSave));
-      this.players = saveData.players || [];
-      this.opponents = saveData.opponents || [];
-      this.sortCombatants(); // Sort combatants whenever the state is loaded
+      if (confirm("Loading a new save will lose the current state of the combat. Are you sure?")) {
+        const saveData = JSON.parse(localStorage.getItem(this.selectedSave));
+        this.players = saveData.players || [];
+        this.opponents = saveData.opponents || [];
+        this.saveName = this.selectedSave;
+        this.sortCombatants(); // Sort combatants whenever the state is loaded
+      }
+    },
+    deleteSave() {
+      if (!this.selectedSave) {
+        alert("Please select a save to delete.");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to delete the save "${this.selectedSave}"? This action cannot be undone.`)) {
+        localStorage.removeItem(this.selectedSave);
+        this.resetState();
+      }
+    },
+    deleteAllSaves() {
+      if (confirm("Are you sure you want to delete all saves? This action cannot be undone.")) {
+        localStorage.clear();
+        this.resetState();
+      }
+    },
+    resetState() {
+      this.players = [];
+      this.opponents = [];
+      this.saveName = '';
+      this.selectedSave = '';
+      this.updateLoadSelect();
+    },
+    attack(combatant) {
+      this.disableButtons();
+      const damageReduction = combatant.damage >= 4 ? 4 : combatant.damage >= 3 ? 3 : 2;
+      combatant.currentSpeed = Math.max(0, combatant.currentSpeed - damageReduction);
+    },
+    defend(combatant) {
+      this.disableButtons();
+      const defenseReduction = this.getRandomStat(2, 3);
+      combatant.currentSpeed = Math.max(0, combatant.currentSpeed - defenseReduction);
+    },
+    updateEffect({ location, index, value }) {
+      this.combatants.forEach(combatant => {
+        if (combatant[`${location}Effect${index + 1}`] !== undefined) {
+          combatant[`${location}Effect${index + 1}`] = value;
+        }
+      });
+    },
+    disableButtons() {
+      this.buttonsDisabled = true;
+      setTimeout(() => {
+        this.buttonsDisabled = false;
+      }, 1000);
     },
     updateLoadSelect() {
       this.savedStates = [];
@@ -197,21 +261,6 @@ new Vue({
         const key = localStorage.key(i);
         this.savedStates.push(key);
       }
-    },
-    attack(combatant) {
-      const damageReduction = combatant.damage >= 4 ? 4 : combatant.damage >= 3 ? 3 : 2;
-      combatant.currentSpeed = Math.max(0, combatant.currentSpeed - damageReduction);
-    },
-    defend(combatant) {
-      const defenseReduction = this.getRandomStat(2, 3);
-      combatant.currentSpeed = Math.max(0, combatant.currentSpeed - defenseReduction);
-    },
-    updateEffect(location, { index, value }) {
-      this.combatants.forEach(combatant => {
-        if (combatant[`${location}Effect${index + 1}`] !== undefined) {
-          combatant[`${location}Effect${index + 1}`] = value;
-        }
-      });
     }
   },
   computed: {
