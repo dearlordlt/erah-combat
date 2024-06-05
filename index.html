@@ -84,18 +84,21 @@
 
     <template id="opponent-details-template">
         <div>
-            <div class="grid grid-cols-3 gap-2">
-                <div><span class="font-bold">Gender:</span> {{ combatant.gender }}</div>
-                <div><span class="font-bold">Name:</span> {{ combatant.name }}</div>
-                <div><span class="font-bold">Attack:</span> {{ combatant.attack }}</div>
-                <div><span class="font-bold">Defense:</span> {{ combatant.defence }}</div>
-                <div><span class="font-bold">Speed:</span> {{ combatant.speed }}</div>
-                <div><span class="font-bold">Weapon:</span> {{ combatant.weapon }}</div>
-                <div><span class="font-bold">Damage:</span> {{ combatant.damage }}</div>
-                <div class="flex items-center">
-                    <span class="font-bold">HP:</span>
-                    <span class="ml-2">{{ combatant.hp }}</span>
-                    <button @click="markAsDead(combatant)" class="ml-2 text-red-500">💀</button>
+            <div class="flex">
+                <img :src="'https://robohash.org/' + combatant.name + '?set=set2'" alt="Portrait" class="w-24 h-24 mr-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <div><span class="font-bold">Gender:</span> {{ combatant.gender }}</div>
+                    <div><span class="font-bold">Name:</span> {{ combatant.name }}</div>
+                    <div><span class="font-bold">Attack:</span> {{ combatant.attack }}</div>
+                    <div><span class="font-bold">Defense:</span> {{ combatant.defence }}</div>
+                    <div><span class="font-bold">Speed:</span> {{ combatant.speed }}</div>
+                    <div><span class="font-bold">Weapon:</span> {{ combatant.weapon }}</div>
+                    <div><span class="font-bold">Damage:</span> {{ combatant.damage }}</div>
+                    <div class="flex items-center">
+                        <span class="font-bold">HP:</span>
+                        <span class="ml-2">{{ combatant.hp }}</span>
+                        <button @click="markAsDead(combatant)" class="ml-2 text-red-500">💀</button>
+                    </div>
                 </div>
             </div>
             <h4 class="font-bold mt-4">Damage Effects</h4>

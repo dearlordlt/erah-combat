@@ -1,3 +1,32 @@
+Vue.component('opponent-details', {
+  template: '#opponent-details-template',
+  props: ['combatant'],
+  methods: {
+    markAsDead() {
+      this.combatant.isDead = !this.combatant.isDead;
+      if (this.combatant.isDead) {
+        this.combatant.currentSpeed = 0; // Ensure they can't attack or defend
+      } else {
+        this.combatant.currentSpeed = this.combatant.speed; // Restore the original speed when un-killed
+      }
+    },
+    updateEffect(location, { index, value }) {
+      this.$emit('update-effect', { location, index, value });
+    }
+  }
+});
+
+Vue.component('damage-effect', {
+  template: '#damage-effect-template',
+  props: ['location', 'armor', 'effects'],
+  methods: {
+    updateEffect(event) {
+      const index = this.effects.findIndex(effect => effect === event.target.value);
+      this.$emit('update', { index, value: event.target.value });
+    }
+  }
+});
+
 new Vue({
   el: '#app',
   data: {
