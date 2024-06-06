@@ -33,25 +33,6 @@
     max-height: 80%;
     overflow-y: auto;
 }
-.current-turn {
-    font-weight: bold;
-    padding: 10px;
-    border: 2px solid #4A5568;
-    border-radius: 4px;
-    margin-right: 10px;
-    text-align: center;
-}
-.tooltip {
-    position: absolute;
-    background-color: #333;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    white-space: nowrap;
-    z-index: 1000;
-    transform: translateX(-100%); /* Move the tooltip to the left of the cursor */
-}
-
 .grid {
   display: grid;
   gap: 0; /* Ensure no gaps between grid cells */
@@ -79,4 +60,25 @@
 }
 .bg-gray-500 {
   background-color: gray;
+}
+.armor-icon {
+  color: blue;
+  font-size: 14px;
+}
+.shield-icon {
+  color: orange;
+  font-size: 14px;
+}
+.protection-icon {
+  color: green;
+  font-size: 14px;
+}
+.tooltip {
+  position: absolute;
+  background-color: #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  z-index: 1000;
 }

@@ -34,6 +34,46 @@ Vue.component('modal', {
   template: '#modal-template'
 });
 
+Vue.component('modal', {
+  template: '#modal-template'
+});
+
+Vue.component('opponent-details', {
+  template: '#opponent-details-template',
+  props: ['combatant', 'combatantIndex'],
+  methods: {
+    markAsDead() {
+      this.combatant.isDead = !this.combatant.isDead;
+      if (this.combatant.isDead) {
+        this.combatant.currentSpeed = 0; // Ensure they can't attack or defend
+        this.$emit('log-action', `Opponent ${this.combatant.name} was killed`, this.combatantIndex);
+      } else {
+        this.combatant.currentSpeed = this.combatant.speed; // Restore the original speed when un-killed
+        this.$emit('log-action', `Opponent ${this.combatant.name} was unkilled`, this.combatantIndex);
+      }
+    },
+    updateEffect(location, { index, value }) {
+      this.$emit('update-effect', { location, index, value, combatantIndex: this.combatantIndex });
+    }
+  }
+});
+
+Vue.component('damage-effect', {
+  template: '#damage-effect-template',
+  props: ['location', 'armor', 'shield', 'protection', 'effects', 'combatantIndex'],
+  methods: {
+    updateEffect(index) {
+      return (event) => {
+        this.$emit('update', { index, value: event.target.value });
+      };
+    }
+  }
+});
+
+Vue.component('modal', {
+  template: '#modal-template'
+});
+
 new Vue({
   el: '#app',
   data: {
@@ -54,7 +94,8 @@ new Vue({
     tooltipVisible: false, // Tooltip visibility
     tooltipContent: '', // Tooltip content
     tooltipX: 0, // Tooltip X position
-    tooltipY: 0 // Tooltip Y position
+    tooltipY: 0, // Tooltip Y position
+    difficulty: 'default' // Add difficulty setting
   },
   mounted() {
     this.updateLoadSelect();
@@ -112,16 +153,30 @@ new Vue({
     createOpponent() {
       const gender = Math.random() < 0.5 ? 'male' : 'female';
       const name = this.getRandomName(gender);
-      const attack = this.getRandomStat(3, 6, true);
-      const defence = attack + [-1, 0, 1][Math.floor(Math.random() * 3)];
+      let attack = this.getRandomStat(3, 6, true);
+      let defence = attack + [-1, 0, 1][Math.floor(Math.random() * 3)];
+      let damage = this.getRandomStat(2, 6);
       const speed = this.getRandomStat(5, 10);
       const hp = this.getRandomStat(14, 22);
       const weapons = ["Pistol", "SMG", "Rifle"];
       const weapon = weapons[Math.floor(Math.random() * weapons.length)];
-      const damage = this.calculateDamage(weapon);
-      const armor = this.calculateArmor();
-      const headArmor = Math.random() < 0.2 ? armor + 1 : armor;
-      const bodyArmor = Math.random() < 0.2 ? armor + 1 : armor;
+      const physicalArmor = this.getRandomStat(1, 2);
+      const shield = this.getRandomStat(3, 5);
+      const protection = Math.random() < 0.5 ? this.getRandomStat(0, 1) : 0;
+      const charges = shield === 3 ? 5 : shield === 4 ? 4 : 3;
+      const actualCharges = charges + this.getRandomStat(0, 2);
+      const meleeWeapon = this.getRandomMeleeWeapon();
+
+      // Adjust stats based on difficulty
+      if (this.difficulty === 'easy') {
+        attack = Math.max(2, attack - 1);
+        defence = Math.max(2, defence - 1);
+        damage = Math.max(2, damage - 1);
+      } else if (this.difficulty === 'hard') {
+        attack += 1;
+        defence += 1;
+        damage += 1;
+      }
 
       return {
         type: 'opponent',
@@ -135,12 +190,25 @@ new Vue({
         hp,
         weapon,
         damage,
-        headArmor,
-        bodyArmor,
-        leftHandArmor: armor,
-        rightHandArmor: armor,
-        leftLegArmor: armor,
-        rightLegArmor: armor,
+        physicalArmor,
+        shield,
+        protection,
+        charges: actualCharges,
+        meleeWeapon,
+        headArmor: physicalArmor,
+        bodyArmor: physicalArmor,
+        leftHandArmor: physicalArmor,
+        rightHandArmor: physicalArmor,
+        leftLegArmor: physicalArmor,
+        rightLegArmor: physicalArmor,
+        headShield: shield,
+        bodyShield: shield,
+        leftHandShield: shield,
+        rightHandShield: shield,
+        leftLegShield: shield,
+        rightLegShield: shield,
+        headProtection: protection,
+        bodyProtection: protection,
         headEffect1: '',
         headEffect2: '',
         headEffect3: '',
@@ -168,6 +236,12 @@ new Vue({
         } // New property to track roll results
       };
     },
+    getRandomMeleeWeapon() {
+      const rand = Math.random();
+      if (rand < 0.2) return "Unarmed";
+      if (rand < 0.7) return "Knife";
+      return "Sword";
+    },
     calculateDamage(weapon) {
       switch (weapon) {
         case "Pistol":
@@ -177,10 +251,6 @@ new Vue({
         case "Rifle":
           return this.getRandomStat(4, 6);
       }
-    },
-    calculateArmor() {
-      const baseArmor = Math.random() < 0.1 ? (Math.random() < 0.5 ? 2 : 6) : this.getRandomStat(3, 5);
-      return baseArmor;
     },
     generateUniqueId() {
       return 'id-' + Math.random().toString(36).substr(2, 9);

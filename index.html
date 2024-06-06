@@ -19,6 +19,12 @@
                 <button @click="startCombat" class="bg-blue-500 text-white py-2 px-4 rounded whitespace-nowrap">Start Combat</button>
             </div>
             <div class="flex items-center">
+                <label for="difficulty" class="mr-2">Difficulty:</label>
+                <select id="difficulty" v-model="difficulty" class="w-full p-2 border rounded mr-2">
+                    <option value="easy">Easy</option>
+                    <option value="default">Default</option>
+                    <option value="hard">Hard</option>
+                </select>
                 <span class="current-turn">{{ turnNumber }}</span>
                 <button @click="newTurn" class="bg-purple-500 text-white py-2 px-4 rounded ml-2 whitespace-nowrap">New Turn</button>
             </div>
@@ -115,6 +121,22 @@
                     <div><span class="font-bold">Speed:</span> {{ combatant.speed }}</div>
                     <div><span class="font-bold">Weapon:</span> {{ combatant.weapon }}</div>
                     <div><span class="font-bold">Damage:</span> {{ combatant.damage }}</div>
+                    <div><span class="font-bold">Melee Weapon:</span> {{ combatant.meleeWeapon }}</div> <!-- New melee weapon field -->
+                    <div class="flex items-center">
+                        <span class="font-bold">Physical Armor:</span> {{ combatant.physicalArmor }} <span class="armor-icon">🛡️</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="font-bold">Shield:</span> {{ combatant.shield }} <span class="shield-icon">🛡️</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="font-bold">Protection:</span> {{ combatant.protection }} <span class="protection-icon">🛡️</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="font-bold">Charges:</span>
+                        <select v-model="combatant.charges" class="ml-2 p-1 border rounded">
+                            <option v-for="n in 7" :key="n" :value="n">{{ n }}</option>
+                        </select>
+                    </div>
                     <div class="flex items-center">
                         <span class="font-bold">HP:</span>
                         <span class="ml-2">{{ combatant.hp }}</span>
@@ -124,12 +146,12 @@
             </div>
             <h4 class="font-bold mt-4">Damage Effects</h4>
             <div class="grid grid-cols-2 gap-2">
-                <damage-effect location="Head" :armor="combatant.headArmor" :effects="[combatant.headEffect1, combatant.headEffect2, combatant.headEffect3]" :combatant-index="combatantIndex" @update="updateEffect('head', $event)"></damage-effect>
-                <damage-effect location="Body" :armor="combatant.bodyArmor" :effects="[combatant.bodyEffect1, combatant.bodyEffect2, combatant.bodyEffect3]" :combatant-index="combatantIndex" @update="updateEffect('body', $event)"></damage-effect>
-                <damage-effect location="Left Hand" :armor="combatant.leftHandArmor" :effects="[combatant.leftHandEffect1, combatant.leftHandEffect2, combatant.leftHandEffect3]" :combatant-index="combatantIndex" @update="updateEffect('leftHand', $event)"></damage-effect>
-                <damage-effect location="Right Hand" :armor="combatant.rightHandArmor" :effects="[combatant.rightHandEffect1, combatant.rightHandEffect2, combatant.rightHandEffect3]" :combatant-index="combatantIndex" @update="updateEffect('rightHand', $event)"></damage-effect>
-                <damage-effect location="Left Leg" :armor="combatant.leftLegArmor" :effects="[combatant.leftLegEffect1, combatant.leftLegEffect2, combatant.leftLegEffect3]" :combatant-index="combatantIndex" @update="updateEffect('leftLeg', $event)"></damage-effect>
-                <damage-effect location="Right Leg" :armor="combatant.rightLegArmor" :effects="[combatant.rightLegEffect1, combatant.rightLegEffect2, combatant.rightLegEffect3]" :combatant-index="combatantIndex" @update="updateEffect('rightLeg', $event)"></damage-effect>
+                <damage-effect location="Head" :armor="combatant.headArmor" :shield="combatant.shield" :protection="combatant.protection" :effects="[combatant.headEffect1, combatant.headEffect2, combatant.headEffect3]" :combatant-index="combatantIndex" @update="updateEffect('head', $event)"></damage-effect>
+                <damage-effect location="Body" :armor="combatant.bodyArmor" :shield="combatant.shield" :protection="combatant.protection" :effects="[combatant.bodyEffect1, combatant.bodyEffect2, combatant.bodyEffect3]" :combatant-index="combatantIndex" @update="updateEffect('body', $event)"></damage-effect>
+                <damage-effect location="Left Hand" :armor="combatant.leftHandArmor" :shield="combatant.shield" :effects="[combatant.leftHandEffect1, combatant.leftHandEffect2, combatant.leftHandEffect3]" :combatant-index="combatantIndex" @update="updateEffect('leftHand', $event)"></damage-effect>
+                <damage-effect location="Right Hand" :armor="combatant.rightHandArmor" :shield="combatant.shield" :effects="[combatant.rightHandEffect1, combatant.rightHandEffect2, combatant.rightHandEffect3]" :combatant-index="combatantIndex" @update="updateEffect('rightHand', $event)"></damage-effect>
+                <damage-effect location="Left Leg" :armor="combatant.leftLegArmor" :shield="combatant.shield" :effects="[combatant.leftLegEffect1, combatant.leftLegEffect2, combatant.leftLegEffect3]" :combatant-index="combatantIndex" @update="updateEffect('leftLeg', $event)"></damage-effect>
+                <damage-effect location="Right Leg" :armor="combatant.rightLegArmor" :shield="combatant.shield" :effects="[combatant.rightLegEffect1, combatant.rightLegEffect2, combatant.rightLegEffect3]" :combatant-index="combatantIndex" @update="updateEffect('rightLeg', $event)"></damage-effect>
             </div>
             <h4 class="font-bold mt-4">Description</h4>
             <textarea v-model="combatant.description" rows="2" class="w-full p-1 border rounded"></textarea>
@@ -138,7 +160,7 @@
 
     <template id="damage-effect-template">
         <div class="border p-2 rounded flex items-center space-x-2">
-            <span class="font-bold whitespace-nowrap">{{ location }} 🛡️ {{ armor }}</span>
+            <span class="font-bold whitespace-nowrap">{{ location }} 🛡️:{{ armor }} 🌐 {{ shield }}<template v-if="location === 'Head' || location === 'Body'"> 🪖 {{ protection }}</template></span>
             <select v-model="effects[0]" @change="updateEffect(0)" class="w-full p-1 border rounded">
                 <option value=""></option>
                 <option value="T">T</option>
@@ -175,7 +197,7 @@
             <div class="grid" :style="{ 'grid-template-columns': `repeat(${columns}, 1fr)`, 'grid-template-rows': `repeat(${rows}, 1fr)` }">
                 <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="grid-row">
                     <div v-for="(cell, colIndex) in row" :key="colIndex" class="grid-cell" :class="{ 'bg-red-500': cell?.type === 'opponent' && !isDead(cell), 'bg-green-500': cell?.type === 'player', 'bg-gray-500': isDead(cell) }">
-                        <template v-if="cell">
+                        <template v-if="cell && !cell.empty">
                             <div class="combatant-info">
                                 <span v-if="cell.type === 'opponent'">#{{ cell.index }} {{ cell.name }} ({{ cell.speed }})</span>
                                 <span v-else>{{ cell.name }}</span>
