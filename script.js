@@ -20,7 +20,7 @@ Vue.component('opponent-details', {
 
 Vue.component('damage-effect', {
   template: '#damage-effect-template',
-  props: ['location', 'armor', 'effects', 'combatantIndex'],
+  props: ['location', 'charges', 'armor', 'shield', 'protection', 'effects', 'combatantIndex'],
   methods: {
     updateEffect(index) {
       return (event) => {

@@ -160,7 +160,7 @@
 
     <template id="damage-effect-template">
         <div class="border p-2 rounded flex items-center space-x-2">
-            <span class="font-bold whitespace-nowrap">{{ location }} 🛡️:{{ armor }} 🌐 {{ shield }}<template v-if="location === 'Head' || location === 'Body'"> 🪖 {{ protection }}</template></span>
+            <span class="font-bold whitespace-nowrap">{{ location }} 🛡️:{{ armor }} 🌐:{{ shield }}<template v-if="location === 'Head' || location === 'Body'"> 🪖:{{ protection }}</template></span>
             <select v-model="effects[0]" @change="updateEffect(0)" class="w-full p-1 border rounded">
                 <option value=""></option>
                 <option value="T">T</option>
